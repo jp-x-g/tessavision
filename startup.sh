@@ -11,5 +11,6 @@ sudo apt-get -y update
 echo "Installing figlet."
 sudo apt-get -y install figlet
 sudo apt-get -y install fbi
+sudo apt-get -y install jq
 bash compose.sh
 rm ../tessavision/temp/*

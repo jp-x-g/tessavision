@@ -10,6 +10,8 @@ paste blocks/logo3.txt blocks/0date.txt > blocks/header.txt
 # 69 plus date = 51 for it
 clear
 cat blocks/header.txt
+printf '%*s\n' 120 '' | tr ' ' '_'
+
 #sleep 15
 
 

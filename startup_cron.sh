@@ -11,6 +11,7 @@ $CRON_BLOCK_START
 */5 * * * * cd "$BASE_DIR" && ./events.sh >> temp/events.cron.log 2>&1
 0 */1 * * * cd "$BASE_DIR" && ./ticker.sh >> temp/ticker.cron.log 2>&1
 0 */2 * * * cd "$BASE_DIR" && ./update.sh >> temp/update.cron.log 2>&1
+* * * * * cd "$BASE_DIR" && touch temp/is_this_thing_even_cron
 $CRON_BLOCK_END
 EOF
 )"

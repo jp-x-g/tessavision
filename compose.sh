@@ -109,4 +109,4 @@ clear
 cat temp/display.txt
 
 # printf '%*s\n' 120 '' | tr ' ' '_'
-# sleep 15
+sleep 60

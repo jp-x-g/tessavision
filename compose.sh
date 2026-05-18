@@ -3,6 +3,10 @@
 export LANG=C.UTF-8
 export LC_ALL=C.UTF-8
 
+tput civis
+trap 'tput cnorm; exit' INT TERM EXIT
+# Hides terminal cursor until we unhide it.
+
 mkdir -p auth blocks temp
 
 # ------------------------------------------------------------
@@ -199,4 +203,8 @@ clear
 cat temp/display.txt
 
 # printf '%*s\n' 120 '' | tr ' ' '_'
-# sleep 15
+sleep 15
+
+tput cnorm
+trap - INT TERM EXIT
+# Restore cursor

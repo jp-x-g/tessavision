@@ -67,8 +67,8 @@ frame_block 3F < temp/3f.txt > temp/3f.box
 frame_block 4F < temp/4f.txt > temp/4f.box
 
 echo "asdf"
-paste temp/1f.box temp/2f.box >> temp/header.txt
-paste temp/3f.box temp/4f.box >> temp/header.txt
+paste -d '' temp/1f.box temp/2f.box >> temp/header.txt
+paste -d '' temp/3f.box temp/4f.box >> temp/header.txt
 
 
 

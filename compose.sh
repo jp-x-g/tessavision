@@ -6,6 +6,30 @@ export LC_ALL=C.UTF-8
 mkdir -p auth blocks temp
 
 # ------------------------------------------------------------
+# ANSI colors
+# ------------------------------------------------------------
+
+RED=$'\033[31m'
+RESET=$'\033[0m'
+
+# Read current floor from either temp/current_floor.txt or ./current_floor.txt
+CURRENT_FLOOR=""
+
+if [ -f temp/current_floor.txt ]; then
+  CURRENT_FLOOR="$(tr -d '[:space:]' < temp/current_floor.txt)"
+elif [ -f current_floor.txt ]; then
+  CURRENT_FLOOR="$(tr -d '[:space:]' < current_floor.txt)"
+fi
+
+# Normalize e.g. "4", "4f", "4F" -> "4F"
+case "$CURRENT_FLOOR" in
+  1|1f|1F) CURRENT_FLOOR="1F" ;;
+  2|2f|2F) CURRENT_FLOOR="2F" ;;
+  3|3f|3F) CURRENT_FLOOR="3F" ;;
+  4|4f|4F) CURRENT_FLOOR="4F" ;;
+esac
+
+# ------------------------------------------------------------
 # Header
 # ------------------------------------------------------------
 
@@ -29,64 +53,130 @@ paste blocks/logo3.txt temp/0right.txt > temp/header.txt
 # ------------------------------------------------------------
 
 H=9
+LEFT_W=13
+RIGHT_W=44
 
-print_event_row() {
-  local line="$1"
-  local left right
+colorize_if_current() {
+  local title="$1"
+  local text="$2"
 
-  # temp/*f.txt should use ASCII pipe:
+  if [ "$title" = "$CURRENT_FLOOR" ]; then
+    printf '%s%s%s' "$RED" "$text" "$RESET"
+  else
+    printf '%s' "$text"
+  fi
+}
+
+print_top_border() {
+  local title="$1"
+  local s
+
+  case "$title" in
+    1F) s='╔═════════════╤═════════════ 1F ═══════════════════════════╗' ;;
+    2F) s='╔═════════════╤═════════════ 2F ═══════════════════════════╗' ;;
+    3F) s='╔═════════════╤═════════════ 3F ═══════════════════════════╗' ;;
+    4F) s='╔═════════════╤═════════════ 4F ═══════════════════════════╗' ;;
+     *) s="╔═════════════╤═════════════ $title ═══════════════════════════╗" ;;
+  esac
+
+  colorize_if_current "$title" "$s"
+  printf '\n'
+}
+
+print_bottom_border() {
+  local title="$1"
+  local s='╚═════════════╧════════════════════════════════════════════╝'
+
+  colorize_if_current "$title" "$s"
+  printf '\n'
+}
+
+print_event_row_parts() {
+  local title="$1"
+  local left="$2"
+  local right="$3"
+  local lborder rborder divider
+
+  if [ "$title" = "$CURRENT_FLOOR" ]; then
+    lborder="${RED}║${RESET}"
+    rborder="${RED}║${RESET}"
+    divider="${RED}│${RESET}"
+  else
+    lborder="║"
+    rborder="║"
+    divider="│"
+  fi
+
+  printf '%s%-13.13s%s%-44.44s%s\n' \
+    "$lborder" "$left" "$divider" "$right" "$rborder"
+}
+
+print_blank_row() {
+  local title="$1"
+  print_event_row_parts "$title" "" ""
+}
+
+print_wrapped_event() {
+  local title="$1"
+  local line="$2"
+  local left right chunk
+
+  # Expected input:
   # 19:00 - 21:30| 90/30 ML Reading Club
   #
-  # NOT Unicode │ in the file.
+  # Plain ASCII pipe in file, pretty Unicode divider only rendered here.
   left="${line%%|*}"
   right="${line#*|}"
 
-  # If there was no pipe, treat whole thing as right-side text.
+  # If no pipe exists, shove whole line into right column.
   if [ "$left" = "$right" ]; then
     left=""
     right="$line"
   fi
 
-  # 13 left + 1 divider + 44 right = 58 inner cells
-  printf '║%-13.13s│%-44.44s║\n' "$left" "$right"
-}
+  # First row: time/date left column + first title chunk.
+  chunk="${right:0:$RIGHT_W}"
+  right="${right:$RIGHT_W}"
 
-print_blank_row() {
-  printf '║%-13.13s│%-44.44s║\n' "" ""
+  print_event_row_parts "$title" "$left" "$chunk"
+  ROWS_PRINTED=$((ROWS_PRINTED + 1))
+
+  # Continuation rows: blank left column + next title chunks.
+  while [ -n "$right" ] && [ "$ROWS_PRINTED" -lt "$H" ]; do
+    chunk="${right:0:$RIGHT_W}"
+    right="${right:$RIGHT_W}"
+
+    print_event_row_parts "$title" "" "$chunk"
+    ROWS_PRINTED=$((ROWS_PRINTED + 1))
+  done
 }
 
 make_floor_box() {
   local title="$1"
   local infile="$2"
   local outfile="$3"
-  local n=0
   local line
 
+  ROWS_PRINTED=0
+
   {
-    case "$title" in
-      1F) printf '╔═════════════╤═════════════ 1F ═══════════════════════════╗\n' ;;
-      2F) printf '╔═════════════╤═════════════ 2F ═══════════════════════════╗\n' ;;
-      3F) printf '╔═════════════╤═════════════ 3F ═══════════════════════════╗\n' ;;
-      4F) printf '╔═════════════╤═════════════ 4F ═══════════════════════════╗\n' ;;
-       *) printf '╔═════════════╤═════════════ %s ═══════════════════════════╗\n' "$title" ;;
-    esac
+    print_top_border "$title"
 
     if [ -f "$infile" ]; then
-      while IFS= read -r line && [ "$n" -lt "$H" ]; do
-        # Skip empty lines so empty event files don't create one weird blank full-width row.
+      while IFS= read -r line && [ "$ROWS_PRINTED" -lt "$H" ]; do
+        # Skip empty lines so empty event files don't create one weird blank row.
         [ -z "$line" ] && continue
 
-        print_event_row "$line"
-        n=$((n + 1))
+        print_wrapped_event "$title" "$line"
       done < "$infile"
     fi
 
-    while [ "$n" -lt "$H" ]; do
-      print_blank_row
-      n=$((n + 1))
+    while [ "$ROWS_PRINTED" -lt "$H" ]; do
+      print_blank_row "$title"
+      ROWS_PRINTED=$((ROWS_PRINTED + 1))
     done
 
-    printf '╚═════════════╧════════════════════════════════════════════╝\n'
+    print_bottom_border "$title"
   } > "$outfile"
 }
 
@@ -109,4 +199,4 @@ clear
 cat temp/display.txt
 
 # printf '%*s\n' 120 '' | tr ' ' '_'
-sleep 60
+# sleep 15

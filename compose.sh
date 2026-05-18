@@ -20,10 +20,10 @@ while true; do
 	# Read current floor from either temp/current_floor.txt or ./current_floor.txt
 	CURRENT_FLOOR=""
 
-	if [ -f temp/current_floor.txt ]; then
-	  CURRENT_FLOOR="$(tr -d '[:space:]' < temp/current_floor.txt)"
-	elif [ -f current_floor.txt ]; then
-	  CURRENT_FLOOR="$(tr -d '[:space:]' < current_floor.txt)"
+	if [ -f temp/current_floor ]; then
+	  CURRENT_FLOOR="$(tr -d '[:space:]' < temp/current_floor)"
+	elif [ -f current_floor ]; then
+	  CURRENT_FLOOR="$(tr -d '[:space:]' < current_floor)"
 	fi
 
 	# Normalize e.g. "4", "4f", "4F" -> "4F"

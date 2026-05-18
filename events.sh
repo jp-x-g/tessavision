@@ -55,11 +55,11 @@ for f in 1 2 3 4; do
     | if length == 0 then
         [""]
       else
-        map("\(.start | airtime) - \(.end | airtime)│ \(.name)")
+        map("\(.start | airtime) - \(.end | airtime)| \(.name)")
       end
     | .[]
   ' temp/events.json > "temp/${f}f.txt"
   echo "${f}: "
   cat temp/${f}f.txt
 done
-# Note that the "│" between the start-end and the event name is a box-drawing Unicode char, not a pipe
+# Note that the "│" between the start-end and the event name is a pipe in this file but later is turned into a box-drawing Unicode char, not a pipe

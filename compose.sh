@@ -40,7 +40,7 @@ while true; do
 
 	date '+%A,%n%Y %b %d' | figlet -r -w 56 -f smslant > temp/0date.txt
 
-	date '+%H:%M %Z' > temp/0time.txt
+	date '+%H:%M:%S %Z' > temp/0time.txt
 
 	printf "  %s | SPY $%s | BTC $%s | BRENT $%s/BBL" \
 	  "$(cat temp/0time.txt)" \
@@ -200,12 +200,12 @@ while true; do
 	paste -d '' temp/1f.box temp/2f.box >> temp/display.txt
 	paste -d '' temp/3f.box temp/4f.box >> temp/display.txt
 
-	clear
+	#clear
 	tput cup 0 0
 	printf '%s' "$(<temp/display.txt)"
 
 	# printf '%*s\n' 120 '' | tr ' ' '_'
-	sleep 15
+	sleep 1
 done
 
 	tput cnorm

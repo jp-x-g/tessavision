@@ -13,7 +13,9 @@ sudo apt-get -y install jq
 
 chmod +x events.sh ticker.sh compose.sh
 
+rm ../tessavision/temp/*
+touch temp/SPY.txt temp/BTC.txt temp/BZUSD.txt
+
 bash events.sh
 #bash ticker.sh
 bash compose.sh
-rm ../tessavision/temp/*

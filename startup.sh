@@ -3,7 +3,12 @@ mkdir -p auth blocks temp
 sudo setterm --foreground yellow --bold on --background green --store
 sudo setfont Lat15-TerminusBold32x16.psf.gz
 clear
+
+echo "Setting timezone and enabling sync."
 sudo timedatectl set-timezone America/Los_Angeles
+sudo timedatectl set-ntp true
+
+
 echo "Updating apt-get."
 sudo apt-get -y update
 echo "Installing figlet."

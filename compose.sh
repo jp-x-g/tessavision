@@ -207,7 +207,8 @@ while true; do
 	printf '%s' "$(<temp/display.txt)"
 
 	# printf '%*s\n' 120 '' | tr ' ' '_'
-	sleep 1
+	sleep 0.1
+	# If we sleep for 1000 ms, sometimes we'll display the same second twice and it will look like it's skipping, oh noes!
 done
 
 	tput cnorm

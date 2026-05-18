@@ -100,7 +100,7 @@ make_floor_box 4F temp/4f.txt temp/4f.box
 # ------------------------------------------------------------
 
 cat temp/header.txt > temp/display.txt
-echo "" >> temp/display.txt
+#echo "" >> temp/display.txt
 
 paste -d '' temp/1f.box temp/2f.box >> temp/display.txt
 paste -d '' temp/3f.box temp/4f.box >> temp/display.txt

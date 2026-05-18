@@ -55,7 +55,7 @@ for f in 1 2 3 4; do
     | if length == 0 then
         [""]
       else
-        map("\(.start | airtime) - \(.end | airtime) │ \(.name)")
+        map("\(.start | airtime) - \(.end | airtime)│ \(.name)")
       end
     | .[]
   ' temp/events.json > "temp/${f}f.txt"

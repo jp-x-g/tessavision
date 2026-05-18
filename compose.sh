@@ -200,7 +200,8 @@ paste -d '' temp/1f.box temp/2f.box >> temp/display.txt
 paste -d '' temp/3f.box temp/4f.box >> temp/display.txt
 
 clear
-cat temp/display.txt
+tput cup 0 0
+printf '%s' "$(<temp/display.txt)"
 
 # printf '%*s\n' 120 '' | tr ' ' '_'
 sleep 15

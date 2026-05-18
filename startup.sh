@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-mkdir auth
-mkdir blocks
-mkdir temp
+mkdir -p auth blocks temp
 sudo setterm --foreground yellow --bold on --background green --store
 sudo setfont Lat15-TerminusBold32x16.psf.gz
 clear
@@ -12,5 +10,10 @@ echo "Installing figlet."
 sudo apt-get -y install figlet
 sudo apt-get -y install fbi
 sudo apt-get -y install jq
+
+chmod +x events.sh ticker.sh compose.sh
+
+bash events.sh
+#bash ticker.sh
 bash compose.sh
 rm ../tessavision/temp/*

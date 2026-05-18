@@ -7,6 +7,8 @@ tput civis
 trap 'tput cnorm; exit' INT TERM EXIT
 # Hides terminal cursor until we unhide it.
 
+clear
+
 while true; do
 	mkdir -p auth blocks temp
 

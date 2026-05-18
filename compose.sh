@@ -49,11 +49,11 @@ while true; do
 	  "$(cat temp/SPY.txt)" \
 	  "$(cat temp/BTC.txt)" \
 	  "$(cat temp/BZUSD.txt)" \
-	  > temp/ticker.txt
+	  > temp/ticker.txt 2>/dev/null
 
-	cat temp/0date.txt temp/ticker.txt > temp/0right.txt
+	cat temp/0date.txt temp/ticker.txt > temp/0right.txt 2>/dev/null
 
-	paste blocks/logo3.txt temp/0right.txt > temp/header.txt
+	paste blocks/logo3.txt temp/0right.txt > temp/header.txt 2>/dev/null
 
 	# ------------------------------------------------------------
 	# Floor boxes

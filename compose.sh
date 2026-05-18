@@ -20,7 +20,7 @@ paste blocks/logo3.txt temp/0right.txt > temp/header.txt
 # 69 plus date = 51 for it
 
 W=58
-H=8
+H=9
 
 fit_block() {
   # stdin -> exactly H lines, each exactly W chars
@@ -51,14 +51,19 @@ frame_block() {
   local title="$1"
 
   # title line: 27 ═, space title space, 27 ═ = 58 inner chars for "1F"
-  printf '╔%s %s %s╗\n' \
-    "$(printf '═%.0s' {1..27})" \
-    "$title" \
-    "$(printf '═%.0s' {1..27})"
+  # ╔══════════════╤════════════ 1F ═══════════════════════════╗
+  #printf '╔%s %s %s╗\n' \
+  #  "$(printf '═%.0s' {1..27})" \
+  #  "$title" \
+  #  "$(printf '═%.0s' {1..27})"
+
+  printf '╔══════════════╤════════════ %s ═══════════════════════════╗\n' \
+    "$title"
 
   fit_block | sed 's/^/║/; s/$/║/'
 
-  printf '╚%s╝\n' "$(printf '═%.0s' $(seq 1 "$W"))"
+  #printf '╚%s╝\n' "$(printf '═%.0s' $(seq 1 "$W"))"
+  printf '╚══════════════╧═══════════════════════════════════════════╝\n'
 }
 
 frame_block 1F < temp/1f.txt > temp/1f.box
@@ -66,9 +71,11 @@ frame_block 2F < temp/2f.txt > temp/2f.box
 frame_block 3F < temp/3f.txt > temp/3f.box
 frame_block 4F < temp/4f.txt > temp/4f.box
 
-echo "asdf"
-paste -d '' temp/1f.box temp/2f.box >> temp/header.txt
-paste -d '' temp/3f.box temp/4f.box >> temp/header.txt
+cat temp/header.txt > temp/display.txt
+echo "" >> temp/display.txt
+
+paste -d '' temp/1f.box temp/2f.box >> temp/display.txt
+paste -d '' temp/3f.box temp/4f.box >> temp/display.txt
 
 
 
@@ -80,9 +87,8 @@ paste -d '' temp/3f.box temp/4f.box >> temp/header.txt
 
 
 clear
-echo "asdf"
-cat temp/header.txt
-printf '%*s\n' 120 '' | tr ' ' '_'
+cat temp/display.txt
+# printf '%*s\n' 120 '' | tr ' ' '_'
 
 
 

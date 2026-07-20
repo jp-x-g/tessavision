@@ -40,6 +40,10 @@ while true; do
 	# Header
 	# ------------------------------------------------------------
 
+	# Keep redraws locked to clock-second boundaries instead of adding a
+	# full second after however long this iteration takes.
+	NEXT_TICK_MS=$(( ( $(date +%s) + 1 ) * 1000 + 50 ))
+
 	date '+%A,%n%Y %b %d' | figlet -r -w 56 -f smslant > temp/0date.txt
 
 	date '+%H:%M:%S %Z' > temp/0time.txt
@@ -207,8 +211,12 @@ while true; do
 	printf '%s' "$(<temp/display.txt)"
 
 	# printf '%*s\n' 120 '' | tr ' ' '_'
-	sleep 0.1
-	# If we sleep for 1000 ms, sometimes we'll display the same second twice and it will look like it's skipping, oh noes!
+	NOW_MS="$(date +%s%3N)"
+	SLEEP_MS=$((NEXT_TICK_MS - NOW_MS))
+	if [ "$SLEEP_MS" -gt 0 ]; then
+	  printf -v SLEEP_SECONDS '%d.%03d' $((SLEEP_MS / 1000)) $((SLEEP_MS % 1000))
+	  sleep "$SLEEP_SECONDS"
+	fi
 done
 
 	tput cnorm

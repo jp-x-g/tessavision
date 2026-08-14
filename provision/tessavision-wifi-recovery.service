@@ -1,0 +1,13 @@
+[Unit]
+Description=Unblock TessaVision Wi-Fi and permit saved-profile autoconnect
+After=systemd-rfkill.service NetworkManager.service
+Wants=NetworkManager.service
+Before=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/tessavision-wifi-recovery
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

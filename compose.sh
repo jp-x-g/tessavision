@@ -48,16 +48,47 @@ while true; do
 
 	date '+%H:%M:%S %Z' > temp/0time.txt
 
-	printf "  %s | SPY $%s | BTC $%s | BRENT $%s/BBL" \
-	  "$(cat temp/0time.txt)" \
-	  "$(cat temp/SPY.txt)" \
-	  "$(cat temp/BTC.txt)" \
-	  "$(cat temp/BZUSD.txt)" \
-	  > temp/ticker.txt 2>/dev/null
+	read_fresh_quote() {
+	  local path="$1"
+	  local max_age=7200
+	  local now modified value
+
+	  [ -s "$path" ] || return 1
+	  value="$(tr -d '[:space:]' < "$path")"
+	  [[ "$value" =~ ^[0-9]+([.][0-9]+)?$ ]] || return 1
+
+	  now="$(date +%s)"
+	  modified="$(stat -c %Y "$path")"
+	  [ $((now - modified)) -le "$max_age" ] || return 1
+	  printf '%s' "$value"
+	}
+
+	SPY_VALUE="$(read_fresh_quote temp/SPY.txt 2>/dev/null || true)"
+	BTC_VALUE="$(read_fresh_quote temp/BTC.txt 2>/dev/null || true)"
+	BRENT_VALUE="$(read_fresh_quote temp/BZUSD.txt 2>/dev/null || true)"
+
+	if [ -n "$SPY_VALUE" ] && [ -n "$BTC_VALUE" ] && [ -n "$BRENT_VALUE" ]; then
+	  printf "  %s | SPY $%s | BTC $%s | BRENT $%s/BBL" \
+	    "$(cat temp/0time.txt)" \
+	    "$SPY_VALUE" \
+	    "$BTC_VALUE" \
+	    "$BRENT_VALUE" \
+	    > temp/ticker.txt
+	else
+	  # Never advertise a conspicuous partial ticker. Keep the clock clean
+	  # until all displayed quotes have fresh, validated cache entries.
+	  printf "  %s" "$(cat temp/0time.txt)" > temp/ticker.txt
+	fi
 
 	cat temp/0date.txt temp/ticker.txt > temp/0right.txt 2>/dev/null
 
-	paste blocks/logo3.txt temp/0right.txt > temp/header.txt 2>/dev/null
+	# A literal tab advances the tty cursor without overwriting skipped cells,
+	# and short lines leave old right-edge characters behind. Convert the
+	# separator to spaces and publish a complete 120-column header every frame.
+	paste blocks/logo3.txt temp/0right.txt \
+	  | expand -t 8 \
+	  | awk '{printf "%-120s\n", substr($0, 1, 120)}' \
+	  > temp/header.txt
 
 	# ------------------------------------------------------------
 	# Floor boxes
@@ -127,10 +158,51 @@ while true; do
 	  print_event_row_parts "$title" "" ""
 	}
 
+	wrap_event_title() {
+	  local text="$1"
+	  local word line=""
+	  local -a words
+
+	  # Reading into an array removes leading/trailing whitespace and collapses
+	  # repeated whitespace between words. Event names are plain display text.
+	  read -r -a words <<< "$text"
+	  WRAPPED_LINES=()
+
+	  for word in "${words[@]}"; do
+	    # A pathological unbroken token must still fit the pane. Flush any
+	    # pending normal line, then hard-split only the oversized token.
+	    if [ "${#word}" -gt "$RIGHT_W" ]; then
+	      if [ -n "$line" ]; then
+	        WRAPPED_LINES+=("$line")
+	        line=""
+	      fi
+	      while [ "${#word}" -gt "$RIGHT_W" ]; do
+	        WRAPPED_LINES+=("${word:0:$RIGHT_W}")
+	        word="${word:$RIGHT_W}"
+	      done
+	      line="$word"
+	    elif [ -z "$line" ]; then
+	      line="$word"
+	    elif [ $(( ${#line} + 1 + ${#word} )) -le "$RIGHT_W" ]; then
+	      line+=" $word"
+	    else
+	      WRAPPED_LINES+=("$line")
+	      line="$word"
+	    fi
+	  done
+
+	  if [ -n "$line" ]; then
+	    WRAPPED_LINES+=("$line")
+	  fi
+	  if [ "${#WRAPPED_LINES[@]}" -eq 0 ]; then
+	    WRAPPED_LINES+=("")
+	  fi
+	}
+
 	print_wrapped_event() {
 	  local title="$1"
 	  local line="$2"
-	  local left right chunk
+	  local left right chunk row_left index
 
 	  # Expected input:
 	  # 19:00 - 21:30| 90/30 ML Reading Club
@@ -145,19 +217,17 @@ while true; do
 	    right="$line"
 	  fi
 
-	  # First row: time/date left column + first title chunk.
-	  chunk="${right:0:$RIGHT_W}"
-	  right="${right:$RIGHT_W}"
+	  wrap_event_title "$right"
+	  for index in "${!WRAPPED_LINES[@]}"; do
+	    [ "$ROWS_PRINTED" -lt "$H" ] || break
+	    chunk="${WRAPPED_LINES[$index]}"
+	    if [ "$index" -eq 0 ]; then
+	      row_left="$left"
+	    else
+	      row_left=""
+	    fi
 
-	  print_event_row_parts "$title" "$left" "$chunk"
-	  ROWS_PRINTED=$((ROWS_PRINTED + 1))
-
-	  # Continuation rows: blank left column + next title chunks.
-	  while [ -n "$right" ] && [ "$ROWS_PRINTED" -lt "$H" ]; do
-	    chunk="${right:0:$RIGHT_W}"
-	    right="${right:$RIGHT_W}"
-
-	    print_event_row_parts "$title" "" "$chunk"
+	    print_event_row_parts "$title" "$row_left" "$chunk"
 	    ROWS_PRINTED=$((ROWS_PRINTED + 1))
 	  done
 	}

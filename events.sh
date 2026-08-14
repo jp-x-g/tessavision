@@ -1,32 +1,52 @@
 #!/usr/bin/env bash
+set -Eeuo pipefail
 
+BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$BASE_DIR"
+
+CURL_OPTIONS=(
+  -fsS
+  --connect-timeout 10
+  --max-time 30
+  --retry 2
+  --retry-delay 2
+  --retry-all-errors
+)
+
+mkdir -p temp
+
+if [[ ! -s auth/airtable.com.txt ]]; then
+  echo "Missing Airtable API key" >&2
+  exit 1
+fi
 APIKEY="$(tr -d '\n' < auth/airtable.com.txt)"
 
-echo "CURLing events"
-# curl "https://api.airtable.com/v0/appkHZ2UvU6SouT5y/Events?maxRecords=3&view=Featured%20past%20events%20%28for%20website%29" \
-#  -H "Authorization: Bearer $APIKEY" > test.txt
+events_staging="$(mktemp temp/.events.XXXXXX)"
+floor_staging=()
+cleanup() {
+  rm -f "$events_staging" "${floor_staging[@]}"
+}
+trap cleanup EXIT
 
-curl "https://api.airtable.com/v0/appkHZ2UvU6SouT5y/Events?maxRecords=3&view=Featured%20past%20events%20%28for%20website%29" \
-  -H "Authorization: Bearer $APIKEY" > test.txt
-
-# jq . test.txt
-
-curl -sS "https://api.airtable.com/v0/appkHZ2UvU6SouT5y/Events" \
+curl "${CURL_OPTIONS[@]}" \
+  "https://api.airtable.com/v0/appkHZ2UvU6SouT5y/Events" \
   -H "Authorization: Bearer $APIKEY" \
   -G \
   --data-urlencode "view=Upcoming Events" \
   --data-urlencode "filterByFormula=IS_AFTER({Start Date}, TODAY())" \
   --data-urlencode "sort[0][field]=Start Date" \
   --data-urlencode "sort[0][direction]=asc" \
-  > temp/events.json
+  > "$events_staging"
 
-  #cat temp/events.json
-  #jq . temp/events.json
+jq -e '.records | arrays' "$events_staging" >/dev/null
 
 TODAY="$(date +%F)"
 
-for f in 1 2 3 4; do
-  jq -r --arg floor "Floor $f" --arg today "$TODAY" '
+for floor in 1 2 3 4; do
+  output="$(mktemp "temp/.${floor}f.XXXXXX")"
+  floor_staging+=("$output")
+
+  jq -r --arg floor "Floor $floor" --arg today "$TODAY" '
     def airtime:
       sub("\\.[0-9]{3}Z$"; "Z")
       | fromdateiso8601
@@ -55,11 +75,17 @@ for f in 1 2 3 4; do
     | if length == 0 then
         [""]
       else
-        map("\(.start | airtime) - \(.end | airtime)| \(.name)")
+        map("\(.start | airtime) - \(.end | airtime)|\(.name)")
       end
     | .[]
-  ' temp/events.json > "temp/${f}f.txt"
-  echo "${f}: "
-  cat temp/${f}f.txt
+  ' "$events_staging" > "$output"
 done
-# Note that the "│" between the start-end and the event name is a pipe in this file but later is turned into a box-drawing Unicode char, not a pipe
+
+# Publish only after the API response and all four floor renderings validate.
+install -m 644 "$events_staging" temp/events.json
+for index in 0 1 2 3; do
+  floor=$((index + 1))
+  install -m 644 "${floor_staging[$index]}" "temp/${floor}f.txt"
+done
+
+echo "Updated events for all floors"

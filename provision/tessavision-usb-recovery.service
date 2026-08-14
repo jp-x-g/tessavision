@@ -1,0 +1,11 @@
+[Unit]
+Description=TessaVision fixed USB emergency network
+After=systemd-modules-load.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/tessavision-usb-recovery
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

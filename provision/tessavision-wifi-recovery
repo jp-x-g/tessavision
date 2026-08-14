@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+/usr/sbin/rfkill unblock wifi
+/usr/bin/nmcli radio wifi on
+/usr/bin/nmcli device set wlan0 managed yes
+
+# Saved profiles autoconnect on their own. Reissuing activation attempts here
+# would interrupt an association already in progress on a slower radio.

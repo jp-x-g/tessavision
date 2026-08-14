@@ -1,0 +1,8 @@
+# Per-display settings copied to /boot/firmware/tessavision.conf.
+#
+# Floors may be 1, 2, 3, or 4. Console colors may be black, blue, cyan, green,
+# grey, magenta, red, white, or yellow.
+TESSAVISION_FLOOR=3
+TESSAVISION_HOSTNAME=tessavision
+TESSAVISION_FOREGROUND=yellow
+TESSAVISION_BACKGROUND=black

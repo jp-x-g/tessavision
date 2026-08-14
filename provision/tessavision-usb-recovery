@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+for _ in {1..40}; do
+    if [[ -e /sys/class/net/usb0 ]]; then
+        /usr/sbin/ip address replace 10.77.0.2/24 dev usb0
+        /usr/sbin/ip link set dev usb0 up
+        /usr/sbin/ip route replace default via 10.77.0.1 dev usb0 metric 1000
+        exit 0
+    fi
+    sleep 0.25
+done
+
+# A deployed display normally has no USB host attached. Its absence must not
+# delay the display, Wi-Fi, or SSH boot paths.
+exit 0

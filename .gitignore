@@ -1,5 +1,9 @@
 auth/*
 test*
+!tests/
+!tests/*.py
+__pycache__/
+*.pyc
 blocks/0date.txt
 blocks/header.txt
 blocks/tmp*

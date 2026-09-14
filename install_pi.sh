@@ -15,6 +15,8 @@ TESSAVISION_FLOOR=3
 TESSAVISION_HOSTNAME=tessavision
 TESSAVISION_FOREGROUND=yellow
 TESSAVISION_BACKGROUND=black
+TESSAVISION_WIFI_DEVICE=wlan0
+TESSAVISION_WIFI_CONNECTION=Mox-dongle
 
 exec > >(tee -a "$LOG") 2>&1
 trap 'status=$?; echo "Install failed with status $status at $(date -Is)"; exit "$status"' ERR
@@ -45,6 +47,18 @@ esac
 
 if [[ ! "$TESSAVISION_HOSTNAME" =~ ^[a-zA-Z0-9][a-zA-Z0-9-]{0,62}$ ]]; then
     echo "Invalid TESSAVISION_HOSTNAME: $TESSAVISION_HOSTNAME"
+    exit 1
+fi
+
+if [[ ! "$TESSAVISION_WIFI_DEVICE" =~ ^[a-zA-Z0-9_.-]{1,15}$ ]]; then
+    echo "Invalid TESSAVISION_WIFI_DEVICE: $TESSAVISION_WIFI_DEVICE"
+    exit 1
+fi
+
+# Values enter a quoted systemd Environment= directive. Exclude quoting,
+# newlines, and percent-specifier expansion from profile names.
+if [[ ! "$TESSAVISION_WIFI_CONNECTION" =~ ^[a-zA-Z0-9][a-zA-Z0-9_.\ -]*$ ]]; then
+    echo "Invalid TESSAVISION_WIFI_CONNECTION: $TESSAVISION_WIFI_CONNECTION"
     exit 1
 fi
 
@@ -241,6 +255,17 @@ Persistent=true
 [Install]
 WantedBy=timers.target
 EOF
+
+install -d -m 755 /etc/systemd/system/tessavision-network-watchdog.service.d
+cat > /etc/systemd/system/tessavision-network-watchdog.service.d/device.conf <<EOF
+[Service]
+Environment="TESSAVISION_WIFI_DEVICE=$TESSAVISION_WIFI_DEVICE"
+Environment="TESSAVISION_WIFI_CONNECTION=$TESSAVISION_WIFI_CONNECTION"
+EOF
+
+install -d -m 755 /etc/systemd/journald.conf.d
+install -m 644 "$APP_DIR/provision/tessavision-journald.conf" \
+    /etc/systemd/journald.conf.d/tessavision.conf
 
 systemctl daemon-reload
 systemctl mask getty@tty1.service

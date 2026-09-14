@@ -25,6 +25,34 @@ For a new Pi or replacement card, follow
 Wi-Fi-independent USB SSH route and ends with a real reboot plus USB, LAN, and
 Tailscale acceptance tests.
 
+## Shared baseline and deliberate updates
+
+`main` is the shared software baseline for every floor. Use the same app and
+recovery scripts on both TVs at the next approved rollout; express differences
+through configuration, not floor-specific source branches.
+
+The installer takes floor, hostname, colors, Wi-Fi device and profile from
+`/boot/firmware/tessavision.conf`. Start with
+[`config/1f.conf.example`](config/1f.conf.example) or
+[`config/3f.conf.example`](config/3f.conf.example). Credentials and Tailscale
+identities remain private and unique where appropriate. The installer generates
+the watchdog device override and installs bounded persistent logging.
+
+Publishing Git commits does not deploy them. The live TVs are intentionally
+left at their working versions until a separate rollout is requested. See
+[`OPERATIONS.md`](OPERATIONS.md) for verified deployment differences and the
+future update procedure. `install_pi.sh` replaces the app and schedules a reboot;
+it is a provisioning program, not an unattended update command.
+
+Run local regression checks without network access or Pi access:
+
+```sh
+python3 -m unittest discover -s tests -v
+for script in compose.sh events.sh ticker.sh network_watchdog.sh install_pi.sh; do
+  bash -n "$script" || exit
+done
+```
+
 ## Working from another computer
 
 Clone this private repository on each development computer and use normal Git

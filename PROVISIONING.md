@@ -31,7 +31,9 @@ is still unverified.
 
 ## Floor settings
 
-Choose these before touching the card:
+Choose these before touching the card. Provisioning installs software and
+reboots the target; publishing a Git commit is a separate operation and does
+not authorize provisioning either working TV.
 
 | Floor | Hostname | Normal Tailscale alias | Background |
 | --- | --- | --- | --- |
@@ -41,8 +43,9 @@ Choose these before touching the card:
 | 4 | `tessavision-4f` | `tessavision-4f` | black unless requested |
 
 All displays use yellow foreground text. Start from
-[`tessavision.conf.example`](tessavision.conf.example), changing only floor,
-hostname, and colors.
+[`tessavision.conf.example`](tessavision.conf.example), or the floor-specific
+examples in `config/`. Set floor, hostname, colors, and the Wi-Fi device/profile
+to match the hardware. These values configure one shared software build.
 
 ## 1. Prepare the hardware and source material
 
@@ -135,8 +138,29 @@ credential store. Do not commit it. Requirements:
 - `connection.autoconnect-retries=0`.
 - `802-11-wireless.powersave=2`.
 
-The 3F profile is bound to `wlan1`; copying it unchanged to an onboard-radio Pi
-was one of the first-floor provisioning failures.
+An older 3F dongle profile was bound to `wlan1`; copying it unchanged to an
+onboard-radio Pi caused an early provisioning failure. As verified on
+2026-09-14, 3F currently uses `preconfigured` on `wlan0`. Inspect actual device
+state before copying profiles; their names alone do not identify the radio.
+
+When deliberately using an external adapter, match its actual interface and
+MAC from `ip -brief link`. On 1F, the 2026-09-14 offline repair selected its
+TP-Link adapter as `wlan1` for `Mox-dongle`, retaining the separate
+`preconfigured` profile on `wlan0` as fallback. Match the watchdog to the chosen
+profile/device using a service drop-in at
+`/etc/systemd/system/tessavision-network-watchdog.service.d/device.conf`:
+
+```ini
+[Service]
+Environment=TESSAVISION_WIFI_DEVICE=wlan1
+Environment=TESSAVISION_WIFI_CONNECTION=Mox-dongle
+```
+
+The shared watchdog defaults to onboard `wlan0` if no override is installed.
+The current installer generates this override from `TESSAVISION_WIFI_DEVICE`
+and `TESSAVISION_WIFI_CONNECTION` in the per-Pi config. It does not create or
+rebind secret NetworkManager profiles; prepare those to match as described
+above. Validate connectivity and recovery during the live acceptance test.
 
 Clear any persisted Wi-Fi software block in
 `ROOT_MOUNT/var/lib/systemd/rfkill/*:wlan` by storing `0`, and retain the
@@ -221,7 +245,7 @@ USB route:
 
 ```sh
 cp tessavision.conf.example /tmp/tessavision.conf
-# Edit only floor, hostname, foreground, and background.
+# Set floor, hostname, colors, Wi-Fi device, and saved connection profile.
 ssh-keygen -y -f /home/x/.ssh/id_ed25519_tessavision_pi \
   > /tmp/tessavision-authorized-key.pub
 

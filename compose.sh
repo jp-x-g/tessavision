@@ -149,8 +149,14 @@ while true; do
 	    divider="│"
 	  fi
 
-	  printf '%s%-13.13s%s%-44.44s%s\n' \
-	    "$lborder" "$left" "$divider" "$right" "$rborder"
+	  # Bash printf %s width/precision count bytes, even in a UTF-8 locale.
+	  # Slice by characters and pad separately so an en dash or accented name
+	  # cannot shorten a row (or be cut in the middle of a UTF-8 sequence).
+	  left="${left:0:$LEFT_W}"
+	  right="${right:0:$RIGHT_W}"
+	  printf '%s%s%*s%s%s%*s%s\n' \
+	    "$lborder" "$left" "$((LEFT_W - ${#left}))" '' \
+	    "$divider" "$right" "$((RIGHT_W - ${#right}))" '' "$rborder"
 	}
 
 	print_blank_row() {

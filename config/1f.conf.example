@@ -1,0 +1,8 @@
+# Installer input for 1F; confirm interface names on the target Pi.
+TESSAVISION_FLOOR=1
+TESSAVISION_HOSTNAME=tessavision-1f
+TESSAVISION_FOREGROUND=yellow
+TESSAVISION_BACKGROUND=green
+TESSAVISION_WIFI_DEVICE=wlan1
+TESSAVISION_WIFI_CONNECTION=Mox-dongle
+# Keep the separate preconfigured profile on wlan0 as fallback.

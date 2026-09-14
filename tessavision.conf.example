@@ -6,3 +6,8 @@ TESSAVISION_FLOOR=3
 TESSAVISION_HOSTNAME=tessavision
 TESSAVISION_FOREGROUND=yellow
 TESSAVISION_BACKGROUND=black
+
+# Match the selected NetworkManager profile to the physical Wi-Fi adapter.
+# These are profile names, not passwords. See config/ for floor examples.
+TESSAVISION_WIFI_DEVICE=wlan0
+TESSAVISION_WIFI_CONNECTION=Mox-dongle

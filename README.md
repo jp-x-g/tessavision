@@ -1,7 +1,10 @@
 # TessaVision — Mox displays
 
-Private Mox deployment derived from
+Mox display software developed from Jake's original
 [`jp-x-g/tessavision`](https://github.com/jp-x-g/tessavision).
+The September 24, 2026 handover brings the multi-floor reliability and recovery
+work back to that repository. Earlier versions remain in Git history.
+Publishing this source does not update either running TV.
 
 ## Current deployments
 
@@ -55,7 +58,7 @@ done
 
 ## Working from another computer
 
-Clone this private repository on each development computer and use normal Git
+Clone this repository on each development computer and use normal Git
 pull/commit/push workflows. Do not synchronize the repository's `.git` directory
 with Syncthing; simultaneous filesystem synchronization can corrupt repository
 state or create conflict copies.
